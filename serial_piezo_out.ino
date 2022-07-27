@@ -6,7 +6,7 @@ String incomingString;
 int globalInterval = 5;
 int globalPause = 2;
 int piezoOutPin = 9;
-int highFreq = 3500;
+int highFreq = 4500;
 int lowFreq = 2000;
 int bitsInAChar = 8;
 
@@ -31,9 +31,7 @@ void loop() {
   }
   // read the incoming byte
   incomingString = Serial.readString();
-  initiatePacket(4);
-  //sendPayload(incomingString);
-  
+  sendPayload(incomingString);
   delay(globalPause);
 }
 
@@ -64,18 +62,17 @@ void sendChar(int myChar){
 
 void initiatePacket(int packetSize){
   int characters[bitsInAChar];
-  int andOp=1;
-  for(int i=0; i>4; i++){ //  split the payload size to bits
-    characters[i] = packetSize & andOp;
-    andOp= andOp*2;  // go to next bit
+  // split argument into bits
+  for(byte i = 0; i < 8; i++){
+    characters[i] = ((packetSize >> i) & 0x01);
   }
   
-  tone(piezoOutPin,highFreq);
+  tone(piezoOutPin,highFreq);  // synchronization tone
   delay(20);  // to differentiate this particular tone from other "bits"
   noTone(piezoOutPin);
   delay(globalInterval/5);
   
-  for (int i=0; i<4; i++){
+  for (int i=0; i<8; i++){
     if(characters[i]!=0){
       tone(piezoOutPin,highFreq);
     }
