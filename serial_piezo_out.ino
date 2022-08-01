@@ -1,27 +1,27 @@
-// with config of: 5 and 2 ms 50 8-bit characters take 5 sec to transmit
+/* Arduino underwater acoustic modem Transmitter Module
+ * With the code below, we can send bytes acoustically to other listening devices. 
+ * It decodes each byte to its bits, and sends them using On-Of keying(ASK). it is 
+ * A form of Amplitude Modulation, and it is chosen because of the strange behavior
+ * of acoustic wave phases underwater(attenuation, multi-path propagation etc). 
+ * Currently being tested inside a water bottle, with minaml distance of about 5cm 
+ * between the two piezoelectric transducers(waterproofed. DIY Hydrophones.
+ */
 
-//int incomingByte = 0; // for incoming serial data
 String incomingString;
 
-int globalInterval = 5;
-int globalPause = 2;
+int globalInterval = 1;
+int globalPause = 4;
 int piezoOutPin = 9;
-int highFreq = 4500;
-int lowFreq = 2000;
+int highFreq = 50000;
+//int lowFreq = 2500;
 int bitsInAChar = 8;
-
-/*
-int globalInterval = 50;
-int globalPause = 20;
-int piezoOutPin = 9;
-int highFreq = 600;
-int lowFreq = 400;
-int bitsInAChar = 8;
-*/
 
 void setup() {
   // initialize serial communications at 9600 bps:
   Serial.begin(9600);
+  // Test String with the press of RESET Button
+  sendPayload("abcdefg");
+  delay(globalPause);
 }
 
 void loop() {
@@ -44,7 +44,7 @@ void sendChar(int myChar){
   }
 
   for(int i=0;i<bitsInAChar;i++){ // send the bits to output, with certain intervals!
-    delay(globalInterval/5);  // delay between tones
+    delay(globalPause);  // delay between tones
     if(characters[i]>0){  // if the bitwise AND "fails"
       tone(piezoOutPin,highFreq);
       delay(globalInterval);
@@ -68,22 +68,30 @@ void initiatePacket(int packetSize){
   }
   
   tone(piezoOutPin,highFreq);  // synchronization tone
-  delay(20);  // to differentiate this particular tone from other "bits"
+  delay(8);  // to differentiate this particular tone from other "bits"
   noTone(piezoOutPin);
-  delay(globalInterval/5);
+  delay(globalPause);
   
   for (int i=0; i<8; i++){
     if(characters[i]!=0){
       tone(piezoOutPin,highFreq);
+      delay(globalInterval);
     }
     else{
-      tone(piezoOutPin,lowFreq);
+      //tone(piezoOutPin,lowFreq);
+      delay(globalInterval);
+      
     }
-    delay(globalInterval);
     noTone(piezoOutPin);
-    delay(globalInterval/5);  // delay between tones
+    delay(globalPause);  // delay between tones
   }
     
+}
+
+void stopPacket(){
+  tone(piezoOutPin,highFreq);  // end-of-message tone
+  delay(8);  // to differentiate this particular tone from other "bits"
+  noTone(piezoOutPin);
 }
 
 void sendPayload(String payloadString){
@@ -91,4 +99,5 @@ void sendPayload(String payloadString){
   for(int i=0; i<payloadString.length(); i++){
     sendChar(payloadString.charAt(i));
   }
+  stopPacket();
 }
