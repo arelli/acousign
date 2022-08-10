@@ -32,13 +32,13 @@ void loop() {
 
   if (sensorReading > threshold) { // the message has started
     // sample for globalInterval*2 to see if it is an actual starting tone
-    currentTime = startTime = get_absolute_time()._private_us_since_boot;  // it returns a struct. See types.h of Pico
-    while (lastSampleTime = currentTime < startTime + globalInterval * 2) {
+    lastSampleTime = currentTime = startTime = get_absolute_time()._private_us_since_boot;  // it returns a struct. See types.h of Pico
+    while (currentTime < startTime + globalInterval * 2) {
       //sample the waveform 100 times in globalInterval*2 useconds
       if (absolute_time_diff_us(currentTime - lastSampleTime) < (globalInterval * 2) / 100) {
         sensorReading = analogRead(vibrSensor);
-        measurements[counter] = sensorReading; counter +=1;
-
+        measurements[counter] = sensorReading; counter += 1;
+        lastSampleTime = get_absolute_time_us()._private_us_since_boot;
       }
       currentTime = get_absolute_time_us()._private_us_since_boot;
     }
